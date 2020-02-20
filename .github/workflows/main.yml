@@ -1,0 +1,42 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+jobs:
+  xenial:
+    container: 
+      image: vapor/swift:5.1-xenial
+    services:
+      psql:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: vapor
+          POSTGRES_DB: vii-test
+          POSTGRES_PASSWORD: password
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - run: swift test --enable-test-discovery --sanitize=thread --enable-code-coverage
+  bionic:
+    container: 
+      image: vapor/swift:5.1-bionic
+    services:
+      psql:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: vapor
+          POSTGRES_DB: vii-test
+          POSTGRES_PASSWORD: password
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - run: swift test --enable-test-discovery --sanitize=thread --enable-code-coverage
+    - name: Setup container for codecov upload
+      run: apt-get update && apt-get install curl
+    - name: Process coverage file
+      run: llvm-cov show .build/x86_64-unknown-linux/debug/viiPackageTests.xctest -ignore-filename-regex="(.build|TestUtils|Tests)" -instr-profile=.build/x86_64-unknown-linux/debug/codecov/default.profdata > coverage.txt
